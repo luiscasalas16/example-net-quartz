@@ -2,6 +2,8 @@
 using Quartz.Impl;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace example_net_quartz
@@ -46,8 +48,9 @@ namespace example_net_quartz
 
         static async Task Job(IScheduler scheduler, JobMetadata jobMetadata)
         {
-            IJobDetail job = JobBuilder.Create<JoExample>()
+            IJobDetail job = JobBuilder.Create<JobExample>()
                 .WithIdentity("job-" + jobMetadata.Id)
+                .DisallowConcurrentExecution(!jobMetadata.Concurrent)
                 .Build();
 
             ICronTrigger trigger = (ICronTrigger)TriggerBuilder.Create()
@@ -55,23 +58,19 @@ namespace example_net_quartz
                 .WithCronSchedule(jobMetadata.Schedule)
                 .Build();
 
-            job.JobDataMap.Put(JoExample.Parameter, jobMetadata.Parameter);
+            job.JobDataMap.Put(JobExample.Parameter, jobMetadata.Parameter);
 
             await scheduler.ScheduleJob(job, trigger);
-
-            //DateTimeOffset ft = await scheduler.ScheduleJob(job, trigger);
-
-            //Console.WriteLine(job.Key + " has been scheduled to run at: " + ft + " and repeat based on expression: " + trigger.CronExpressionString);
         }
 
         static List<JobMetadata> GetJobs()
         {
             return new List<JobMetadata>()
             {
-                new JobMetadata(1, "* * * ? * *", "Every second"),
-                new JobMetadata(2, "0 * * ? * *", "Every minute"),
-                new JobMetadata(3, "0/2 * * ? * * *", "Every 2 seconds starting at :00 second after the minute"),
-                new JobMetadata(4, "0/5 * * ? * * *", "Every 5 seconds starting at :00 second after the minute")
+                new JobMetadata(1, "* * * ? * *", true, "Every second"),
+                new JobMetadata(2, "0 * * ? * *", true, "Every minute"),
+                new JobMetadata(3, "0/2 * * ? * * *", true, "Every 2 seconds starting at :00 second after the minute"),
+                new JobMetadata(4, "0/5 * * ? * * *", true, "Every 5 seconds starting at :00 second after the minute")
             };
         }
     }
@@ -80,17 +79,19 @@ namespace example_net_quartz
     {
         public int Id { get; set; }
         public string Schedule { get; set; }
+        public bool Concurrent { get; set; }
         public string Parameter { get; set; }
 
-        public JobMetadata(int id, string schedule, string parameter)
+        public JobMetadata(int id, string schedule, bool concurrent, string parameter)
         {
             Id = id;
             Schedule = schedule;
+            Concurrent = concurrent;
             Parameter = parameter;
         }
     }
 
-    public class JoExample : IJob
+    public class JobExample : IJob
     {
         public const string Parameter = "Parameter";
 
@@ -102,7 +103,11 @@ namespace example_net_quartz
 
             var parameter = jobData.GetString(Parameter);
 
-            Console.WriteLine($"execute - job '{context.JobDetail.Key.Name}' - date '{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}' - parameter '{parameter}'");
+            Console.WriteLine($"starting - job: '{context.JobDetail.Key.Name}' - date: '{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}' - parameter: '{parameter}'");
+
+            Thread.Sleep(5000);
+
+            Console.WriteLine($"ending - job: '{context.JobDetail.Key.Name}' - date: '{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}' - parameter: '{parameter}'");
 
             return default;
         }
