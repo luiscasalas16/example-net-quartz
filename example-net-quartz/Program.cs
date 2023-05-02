@@ -2,7 +2,6 @@
 using Quartz.Impl;
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,6 +9,7 @@ namespace example_net_quartz
 {
     internal class Program
     {
+        //https://en.rakko.tools/tools/88/
         //https://www.freeformatter.com/cron-expression-generator-quartz.html
 
         static async Task Main(string[] args)
@@ -48,7 +48,7 @@ namespace example_net_quartz
 
         static async Task Job(IScheduler scheduler, JobMetadata jobMetadata)
         {
-            IJobDetail job = JobBuilder.Create<JobExample>()
+            IJobDetail job = JobBuilder.Create<Job>()
                 .WithIdentity("job-" + jobMetadata.Id)
                 .DisallowConcurrentExecution(!jobMetadata.Concurrent)
                 .Build();
@@ -58,7 +58,7 @@ namespace example_net_quartz
                 .WithCronSchedule(jobMetadata.Schedule)
                 .Build();
 
-            job.JobDataMap.Put(JobExample.Parameter, jobMetadata.Parameter);
+            job.JobDataMap.Put(example_net_quartz.Job.Parameter, jobMetadata.Parameter);
 
             await scheduler.ScheduleJob(job, trigger);
         }
@@ -91,7 +91,7 @@ namespace example_net_quartz
         }
     }
 
-    public class JobExample : IJob
+    public class Job : IJob
     {
         public const string Parameter = "Parameter";
 
