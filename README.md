@@ -1,4 +1,4 @@
-# net-quartz
+# example-net-quartz
 
 Proyecto de ejemplo de biblioteca [Quartz.Net](https://www.quartz-scheduler.net).
 
