@@ -10,7 +10,6 @@ namespace example_net_quartz
     internal class Program
     {
         //https://en.rakko.tools/tools/88/
-        //https://www.freeformatter.com/cron-expression-generator-quartz.html
 
         static async Task Main(string[] args)
         {
